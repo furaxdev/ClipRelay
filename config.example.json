@@ -1,0 +1,21 @@
+{
+  "session_log_path": "session.log",
+  "output_log_path": "cliprelay_events.log",
+  "clipboard_poll_interval": 0.5,
+  "log_poll_interval": 0.3,
+  "arm_window_seconds": 60,
+  "confirm_delay_seconds": 3,
+  "message_template": "Voici la valeur demandée : {clipboard}",
+  "enable_loose_question_fallback": false,
+  "always_require_confirmation": false,
+  "sensitive_context_keywords": [
+    "api key", "api_key", "clé api",
+    "token", "jeton",
+    "mot de passe", "password",
+    "secret",
+    "private key", "clé privée",
+    "connection string",
+    "PROD_DB_PASSWORD",
+    "STRIPE_SECRET_KEY"
+  ]
+}
