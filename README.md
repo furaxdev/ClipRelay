@@ -27,7 +27,8 @@ Ce prototype **ne tape rien dans un vrai terminal**. Il :
 3. Une fois une question détectée, arme une fenêtre de surveillance du
    presse-papier (60s par défaut).
 4. Au premier changement de presse-papier dans cette fenêtre, compose un
-   message (`Voici la valeur demandée : {clipboard}`).
+   message en tirant au hasard une phrase parmi ~45 variantes (`cliprelay/messages.py`)
+   pour éviter de toujours répéter "Voici la valeur demandée : ...".
 5. Si le contenu ressemble à un secret (clé AWS, token GitHub, clé privée,
    JWT...) **ou** si la question mentionne un mot-clé sensible (password,
    api key, token...), il demande une **confirmation manuelle explicite**
@@ -112,7 +113,7 @@ Voir `config.example.json`. Champs principaux :
 | `output_log_path` | log d'événements ClipRelay |
 | `arm_window_seconds` | durée pendant laquelle un changement de clipboard est pris en compte après une question |
 | `confirm_delay_seconds` | fenêtre d'annulation avant un envoi non-sensible |
-| `message_template` | gabarit du message composé (`{clipboard}`) |
+| `message_templates` | liste de gabarits (`{clipboard}`) - un est tiré au hasard à chaque envoi, jamais deux fois de suite le même ; ~45 variantes par défaut dans `cliprelay/messages.py`, surchargeable |
 | `question_patterns` | regex de détection de question (par défaut dans `cliprelay/patterns.py`) |
 | `enable_loose_question_fallback` | active un fallback "toute ligne finissant par ?" (beaucoup de faux positifs, désactivé par défaut) |
 | `backend` | `"logfile"` (défaut, log-only) ou `"tmux"` (envoi réel, voir plus bas) |

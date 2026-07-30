@@ -44,6 +44,7 @@ class ClipRelayWatcher:
         self._question_patterns = [re.compile(p, re.IGNORECASE) for p in config.all_question_patterns()]
         self._armed_until: Optional[float] = None
         self._triggering_question: Optional[str] = None
+        self._last_template: Optional[str] = None
 
     def _matches_question(self, line: str) -> bool:
         return any(p.search(line) for p in self._question_patterns)
@@ -68,7 +69,9 @@ class ClipRelayWatcher:
         self.logger.log("CLIPBOARD_CHANGED", f"captured new content (len={len(clipboard_text)}, preview=\"{preview}\")")
 
         is_sensitive, rule = classify(self._triggering_question, clipboard_text, self.config)
-        message = self.config.message_template.format(clipboard=clipboard_text)
+        template = self.config.pick_message_template(previous=self._last_template)
+        self._last_template = template
+        message = template.format(clipboard=clipboard_text)
 
         if is_sensitive or self.config.always_require_confirmation:
             reason = f"matched rule={rule}" if is_sensitive else "always_require_confirmation=true"

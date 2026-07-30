@@ -5,7 +5,6 @@
   "log_poll_interval": 0.3,
   "arm_window_seconds": 60,
   "confirm_delay_seconds": 3,
-  "message_template": "Voici la valeur demandée : {clipboard}",
   "enable_loose_question_fallback": false,
   "always_require_confirmation": false,
   "sensitive_context_keywords": [

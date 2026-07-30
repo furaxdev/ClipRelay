@@ -1,0 +1,56 @@
+"""Phrasings used to compose the reply sent back with the clipboard content.
+
+A large pool so ClipRelay doesn't always answer "Voici la valeur demandée : ...".
+One is picked at random each time (never the same one twice in a row when the
+pool has more than one entry). Every entry must contain the `{clipboard}`
+placeholder.
+"""
+
+DEFAULT_MESSAGE_TEMPLATES = [
+    "Voici la valeur demandée : {clipboard}",
+    "Voici : {clipboard}",
+    "Tiens, voilà : {clipboard}",
+    "Voilà ce que tu demandes : {clipboard}",
+    "C'est ça : {clipboard}",
+    "La voici : {clipboard}",
+    "Le voici : {clipboard}",
+    "Voici la valeur : {clipboard}",
+    "Voici ce qu'il te faut : {clipboard}",
+    "Voici la réponse : {clipboard}",
+    "Voici l'info demandée : {clipboard}",
+    "Ça y est, je l'ai copié : {clipboard}",
+    "Je viens de le copier : {clipboard}",
+    "Tiens : {clipboard}",
+    "Voilà : {clipboard}",
+    "C'est celui-ci : {clipboard}",
+    "C'est celle-ci : {clipboard}",
+    "Voici ce que j'ai copié : {clipboard}",
+    "Voici ce que je viens de copier : {clipboard}",
+    "Voici la donnée demandée : {clipboard}",
+    "Voici la valeur à utiliser : {clipboard}",
+    "Voici ce qu'il fallait : {clipboard}",
+    "Voici quoi utiliser : {clipboard}",
+    "Voici l'élément demandé : {clipboard}",
+    "Utilise ceci : {clipboard}",
+    "Prends ceci : {clipboard}",
+    "Voici l'information : {clipboard}",
+    "Je te donne ça : {clipboard}",
+    "Réponse : {clipboard}",
+    "Voici, comme demandé : {clipboard}",
+    "Comme demandé, voici : {clipboard}",
+    "Voici ce que tu as demandé : {clipboard}",
+    "Voici ce que je viens de coller : {clipboard}",
+    "C'est bon, voici : {clipboard}",
+    "Ok, voici : {clipboard}",
+    "Voici la clé/valeur : {clipboard}",
+    "Voici : {clipboard}. Dis-moi si ce n'est pas la bonne valeur.",
+    "Voici ce qui vient d'être copié : {clipboard}",
+    "Voilà, c'est ça : {clipboard}",
+    "Voici, fraîchement copié : {clipboard}",
+    "Here you go: {clipboard}",
+    "Here's the value: {clipboard}",
+    "Here it is: {clipboard}",
+    "Just copied this: {clipboard}",
+    "This is it: {clipboard}",
+    "Use this: {clipboard}",
+]

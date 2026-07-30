@@ -7,10 +7,12 @@ to the defaults below.
 from __future__ import annotations
 
 import json
+import random
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
+from .messages import DEFAULT_MESSAGE_TEMPLATES
 from .patterns import (
     DEFAULT_QUESTION_PATTERNS,
     DEFAULT_SECRET_PATTERNS,
@@ -25,7 +27,7 @@ DEFAULTS = {
     "log_poll_interval": 0.3,
     "arm_window_seconds": 60,
     "confirm_delay_seconds": 3,
-    "message_template": "Voici la valeur demandée : {clipboard}",
+    "message_templates": DEFAULT_MESSAGE_TEMPLATES,
     "question_patterns": DEFAULT_QUESTION_PATTERNS,
     "enable_loose_question_fallback": False,
     "secret_patterns": DEFAULT_SECRET_PATTERNS,
@@ -44,7 +46,7 @@ class Config:
     log_poll_interval: float
     arm_window_seconds: float
     confirm_delay_seconds: float
-    message_template: str
+    message_templates: List[str]
     question_patterns: List[str]
     enable_loose_question_fallback: bool
     secret_patterns: Dict[str, str]
@@ -59,11 +61,21 @@ class Config:
             patterns.append(LOOSE_QUESTION_FALLBACK)
         return patterns
 
+    def pick_message_template(self, previous: Optional[str] = None) -> str:
+        """Random phrasing, avoiding an immediate repeat when the pool allows it."""
+        choices = self.message_templates
+        if len(choices) > 1 and previous in choices:
+            choices = [c for c in choices if c != previous]
+        return random.choice(choices)
+
 
 def load_config(path: str | None) -> Config:
     data = dict(DEFAULTS)
     if path and Path(path).exists():
         with open(path, "r", encoding="utf-8") as f:
             user_data = json.load(f)
+        if "message_template" in user_data and "message_templates" not in user_data:
+            # Backward compatibility with the old single-template field.
+            user_data["message_templates"] = [user_data.pop("message_template")]
         data.update(user_data)
     return Config(**data)
