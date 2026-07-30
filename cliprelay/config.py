@@ -31,6 +31,8 @@ DEFAULTS = {
     "secret_patterns": DEFAULT_SECRET_PATTERNS,
     "sensitive_context_keywords": DEFAULT_SENSITIVE_CONTEXT_KEYWORDS,
     "always_require_confirmation": False,
+    "backend": "logfile",  # "logfile" (safe default, log-only) or "tmux" (real send-keys)
+    "tmux_target": "",  # tmux session/window/pane, e.g. "claude-code" or "claude-code:0.0"
 }
 
 
@@ -48,6 +50,8 @@ class Config:
     secret_patterns: Dict[str, str]
     sensitive_context_keywords: List[str]
     always_require_confirmation: bool
+    backend: str
+    tmux_target: str
 
     def all_question_patterns(self) -> List[str]:
         patterns = list(self.question_patterns)

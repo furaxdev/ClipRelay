@@ -115,21 +115,50 @@ Voir `config.example.json`. Champs principaux :
 | `message_template` | gabarit du message composé (`{clipboard}`) |
 | `question_patterns` | regex de détection de question (par défaut dans `cliprelay/patterns.py`) |
 | `enable_loose_question_fallback` | active un fallback "toute ligne finissant par ?" (beaucoup de faux positifs, désactivé par défaut) |
+| `backend` | `"logfile"` (défaut, log-only) ou `"tmux"` (envoi réel, voir plus bas) |
+| `tmux_target` | session/fenêtre/pane tmux à surveiller, requis si `backend="tmux"` |
 
-## Roadmap - phase 2 : brancher sur le vrai terminal
+## Backend tmux (phase 2, partielle) : le vrai terminal
 
-Pas encore implémenté, volontairement :
+En plus du backend `logfile` (phase 1, log-only), il existe un backend
+`tmux` qui lit et écrit dans un **vrai pane tmux** - donc un vrai terminal,
+plus une simulation de fichier texte :
 
-- **Lecture de session réelle** : remplacer le tail de fichier par la
-  lecture du buffer d'un terminal réel (ex: `tmux capture-pane`, ou un PTY
-  wrappé autour du process Claude Code) au lieu d'un fichier log simulé.
-- **Envoi réel** : injecter le message dans le terminal actif
-  - Linux : `tmux send-keys`, ou `xdotool type` si Claude Code tourne dans
-    une fenêtre classique.
-  - Windows : `pywinauto` ou `pyautogui.write()` ciblé sur la fenêtre active.
-- Garder la même fenêtre d'annulation et les mêmes garde-fous "sensible"
-  déjà en place - phase 2 change seulement les I/O, pas la logique de
-  décision.
+- **Lecture réelle** : `tmux capture-pane` sur la cible configurée, diffé
+  à chaque poll pour n'extraire que les lignes réellement nouvelles.
+- **Envoi réel** : `tmux send-keys -l <message>` puis `Enter` - le texte est
+  **vraiment tapé** dans le pane, pas juste loggé.
+- Toute la logique de décision (fenêtre d'armement, détection sensible,
+  countdown annulable / confirmation manuelle) reste identique - seul
+  le "SENT" devient une vraie frappe clavier au lieu d'une ligne de log.
+
+Config :
+```json
+{
+  "backend": "tmux",
+  "tmux_target": "nom-de-session"
+}
+```
+`tmux_target` accepte la syntaxe tmux standard (`session`, `session:fenêtre`,
+`session:fenêtre.pane`). La session doit déjà exister - ClipRelay ne crée
+ni ne tue jamais de session à ta place.
+
+Testé de bout en bout (session tmux réelle + `tmux send-keys`/`capture-pane`,
+presse-papier système réel via `xclip`/`Xvfb` en environnement sans écran) :
+question détectée dans le pane, secret bloqué en confirmation manuelle sans
+rien taper, réponse non-sensible réellement tapée après le countdown.
+
+**Limitation connue** : si le pane change très vite (ex: un `Ctrl-C` suivi
+d'un redémarrage immédiat du process, provoquant un vrai scroll du buffer),
+la même ligne peut être détectée deux fois d'affilée (double `ARMED`). Sans
+conséquence pratique (le pire cas est un ré-armement redondant, pas un
+double-envoi), mais à améliorer si ça devient gênant en usage réel.
+
+Ce qui reste pour un vrai usage Windows :
+- `pywinauto` ou `pyautogui.write()` ciblé sur la fenêtre active (pas de
+  tmux natif sous Windows sans WSL).
+- Sur Linux hors tmux (terminal graphique classique) : `xdotool` pour lire/
+  écrire dans une fenêtre par son titre.
 
 ## Sécurité
 

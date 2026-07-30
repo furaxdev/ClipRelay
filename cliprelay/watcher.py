@@ -16,6 +16,7 @@ import re
 import time
 from typing import List, Optional
 
+from . import tmux_backend
 from .clipboard import ClipboardMonitor
 from .config import Config
 from .confirm import ask_yes_no, wait_for_cancel
@@ -28,8 +29,18 @@ class ClipRelayWatcher:
     def __init__(self, config: Config):
         self.config = config
         self.logger = EventLogger(config.output_log_path)
-        self.tailer = LogTailer(config.session_log_path, poll_interval=config.log_poll_interval)
         self.clipboard = ClipboardMonitor()
+
+        if config.backend == "tmux":
+            if not config.tmux_target:
+                raise ValueError("backend=tmux requires tmux_target to be set in config")
+            if not tmux_backend.session_exists(config.tmux_target):
+                raise tmux_backend.TmuxUnavailable(
+                    f"no tmux session/pane found at target={config.tmux_target!r}"
+                )
+            self.tailer = tmux_backend.TmuxPaneTailer(config.tmux_target)
+        else:
+            self.tailer = LogTailer(config.session_log_path, poll_interval=config.log_poll_interval)
         self._question_patterns = [re.compile(p, re.IGNORECASE) for p in config.all_question_patterns()]
         self._armed_until: Optional[float] = None
         self._triggering_question: Optional[str] = None
@@ -64,7 +75,7 @@ class ClipRelayWatcher:
             self.logger.log("SENSITIVE_CHECK", f"{reason} -> manual confirmation required, no auto-send")
             confirmed = ask_yes_no(f"Send this to Claude Code? [y/N]: {message}\n> ")
             if confirmed:
-                self.logger.log("SENT", f'message="{message}" (simulated - manual confirm)')
+                self._deliver(message, note="manual confirm")
             else:
                 self.logger.log("CANCELLED", "user declined manual confirmation")
         else:
@@ -77,16 +88,24 @@ class ClipRelayWatcher:
             if cancelled:
                 self.logger.log("CANCELLED", "user cancelled during countdown")
             else:
-                self.logger.log("SENT", f'message="{message}" (simulated - would be typed into terminal)')
+                self._deliver(message, note="countdown elapsed")
 
         self._disarm("capture handled, returning to idle")
 
+    def _deliver(self, message: str, note: str) -> None:
+        if self.config.backend == "tmux":
+            tmux_backend.send_text(self.config.tmux_target, message)
+            self.logger.log("SENT", f'message="{message}" (typed into tmux target={self.config.tmux_target!r}, {note})')
+        else:
+            self.logger.log("SENT", f'message="{message}" (simulated - would be typed into terminal, {note})')
+
     def run_forever(self) -> None:
-        self.logger.log(
-            "START",
-            f"watching session_log={self.config.session_log_path!r}, "
-            f"output_log={self.config.output_log_path!r}",
+        source = (
+            f"tmux target={self.config.tmux_target!r}"
+            if self.config.backend == "tmux"
+            else f"session_log={self.config.session_log_path!r}"
         )
+        self.logger.log("START", f"watching {source}, output_log={self.config.output_log_path!r}")
         while True:
             for line in self.tailer.poll_lines():
                 if self._matches_question(line):
